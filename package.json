@@ -28,5 +28,8 @@
     "bem",
     "lint",
     "test"
-  ]
+  ],
+  "dependencies": {
+    "object-assign": "^2.0.0"
+  }
 }

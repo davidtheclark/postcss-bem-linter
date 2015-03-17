@@ -4,6 +4,7 @@
  * Module dependencies
  */
 
+var objectAssign = require('object-assign');
 var validateCustomProperties = require('./lib/validate-properties');
 var validateSelectors = require('./lib/validate-selectors');
 var validateRules = require('./lib/validate-rules');
@@ -23,16 +24,20 @@ var RE_DIRECTIVE = /\*\s*@define ([-_a-zA-Z0-9]+)\s*(?:;\s*(use strict))?\s*/;
  * do nothing -- or warn, if the directive is there but the name does not match.
  * Then call all of the validators.
  *
- * @param {Object} [patterns = 'suit']
- * @param {RegExp} [patterns.componentName]
- * @param {Object|Function} [patterns.selectors]
+ * @param {Object} [opts = 'suit']
+ * @param {String} [opts.pattern]
+ * @param {RegExp} [opts.componentName]
+ * @param {Object|Function} [opts.selectors]
+ * @param {String} [opts.namespace]
  */
-function conformance(patterns) {
-  patterns = patterns || 'suit';
-  if (typeof patterns === 'string') {
-    patterns = presetPatterns[patterns];
+function conformance(opts) {
+  opts = opts || 'suit';
+  if (typeof opts === 'string') {
+    opts = presetPatterns[verifyPatternName(opts)];
+  } else if (opts.pattern) {
+    objectAssign(opts, presetPatterns[verifyPatternName(opts.pattern)]);
   }
-  var componentNamePattern = patterns.componentName || /[-_a-zA-Z0-9]+/;
+  var componentNamePattern = opts.componentName || /[-_a-zA-Z0-9]+/;
 
   return function (styles) {
     var firstNode = styles.nodes[0];
@@ -54,7 +59,20 @@ function conformance(patterns) {
     var isStrict = initialComment.match(RE_DIRECTIVE)[2] === 'use strict';
 
     validateRules(styles);
-    validateSelectors(styles, componentName, isStrict, patterns.selectors);
+    validateSelectors(styles, componentName, isStrict, opts);
     validateCustomProperties(styles, componentName);
   };
+}
+
+/**
+ * Throw an error if user has entered a nonexistent preset pattern name.
+ *
+ * @param {String} name - The name to check
+ * @return {String} The name that was passed in
+ */
+function verifyPatternName(name) {
+  if (!presetPatterns[name]) {
+    throw new Error('There is no preset pattern named "' + name + '"');
+  }
+  return name;
 }

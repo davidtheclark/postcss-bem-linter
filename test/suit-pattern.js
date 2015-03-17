@@ -1,6 +1,7 @@
 var util = require('./test-util');
 var assertSuccess = util.assertSuccess;
 var assertFailure = util.assertFailure;
+var selectorTester = util.selectorTester;
 var fixture = util.fixture;
 
 describe('using SUIT pattern (default)', function () {
@@ -21,6 +22,14 @@ describe('using SUIT pattern (default)', function () {
   it('must apply to selectors in media queries', function () {
     assertSuccess(fixture('all-valid-selector-in-media-query'));
     assertFailure(fixture('all-invalid-selector-in-media-query'));
+  });
+
+  it('understands namespaces', function () {
+    var s = selectorTester('/** @define Foo */');
+
+    assertSuccess(s('.ns-Foo'), { pattern: 'suit', namespace: 'ns' });
+    assertFailure(s('.Foo'), { pattern: 'suit', namespace: 'ns' });
+    assertSuccess(s('.Ho04__d-Foo'), { pattern: 'suit', namespace: 'Ho04__d' });
   });
 
   describe('in strict mode', function () {
